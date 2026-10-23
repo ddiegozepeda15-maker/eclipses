@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explorador de eclipses | Física 1° medio</title>
+<style>
+:root{color-scheme:dark;--bg:#050811;--panel:#10182a;--line:#293753;--text:#f1f5ff;--muted:#b5c2dc;--gold:#ffd66b;--blue:#66b9ff;--purple:#c6a5ff}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(ellipse at 50% 0%,#111d3b 0%,#050811 58%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5}
+header{padding:28px 18px 12px;text-align:center} .eyebrow{color:var(--gold);font-size:.78rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+h1{font-size:clamp(1.8rem,5vw,3.2rem);line-height:1.08;margin:8px 0 12px} header p{color:var(--muted);max-width:760px;margin:0 auto}
+main{max-width:1100px;margin:auto;padding:18px;display:grid;gap:18px}
+.tabs{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);border-radius:12px;padding:10px 15px;background:#121b30;color:var(--text);font-weight:700;transition:.2s}
+button:hover{border-color:var(--blue);transform:translateY(-1px)}button.active{background:#253657;border-color:var(--blue);box-shadow:0 0 0 2px #66b9ff20}
+.card{background:linear-gradient(145deg,#10182aee,#0a1020ee);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 14px 40px #0004}
+.scene-wrap{overflow:hidden;border-radius:14px;background:#030610;border:1px solid #1e2a43}
+svg{display:block;width:100%;height:auto;min-height:230px;touch-action:pan-y}
+.scene-caption{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;color:var(--muted);font-size:.88rem;padding:10px 3px 0}
+.controls{display:grid;grid-template-columns:1fr auto;gap:10px 18px;align-items:center;margin-top:14px}
+.controls label{font-weight:700}.controls input[type=range]{width:100%;accent-color:#7ec8ff}.value{color:var(--gold);font-variant-numeric:tabular-nums}
+.small{color:var(--muted);font-size:.9rem}.control-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.info{padding:15px;border-radius:14px;background:#0b1222;border:1px solid #202d47}.info h3{margin:0 0 7px;font-size:1rem;color:var(--gold)}.info p{margin:0;color:#d4def2;font-size:.93rem}
+h2{font-size:1.35rem;margin:0 0 10px}.status{display:inline-flex;align-items:center;gap:8px;border-radius:99px;background:#17233a;padding:7px 12px;font-size:.9rem;font-weight:750;margin:12px 0 0}
+.dot{width:9px;height:9px;background:#ffb95e;border-radius:50%;box-shadow:0 0 12px #ffb95e}
+.note{border-left:3px solid var(--purple);padding:10px 14px;background:#151128;border-radius:0 10px 10px 0;color:#e0d7ff}
+footer{text-align:center;color:#8290ad;padding:0 18px 26px;font-size:.82rem}
+@media(max-width:700px){.info-grid{grid-template-columns:1fr}.card{padding:13px}.controls{grid-template-columns:1fr}.scene-caption{display:block}.scene-caption span{display:block;margin-top:3px}}
+</style>
+</head>
+<body>
+<header>
+ <div class="eyebrow">Laboratorio interactivo · Física · 1° medio</div>
+ <h1>Explorador de eclipses</h1>
+ <p>Mueve manualmente la Tierra y la Luna para alinearlas con el Sol. Los astros permanecerán quietos hasta que uses los controles o los arrastres. Descubre por qué se producen los eclipses y qué cuerpo queda en la sombra.</p>
+</header>
+<main>
+ <nav class="tabs" aria-label="Tipo de eclipse">
+  <button id="lunarBtn" class="active" type="button">🌕 Eclipse lunar</button>
+  <button id="solarBtn" type="button">🌑 Eclipse solar</button>
+ </nav>
+ <section class="card">
+  <div style="display:flex;align-items:start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+   <div><h2 id="sceneTitle">Eclipse lunar</h2><p class="small" id="sceneIntro">La Tierra se interpone entre el Sol y la Luna.</p></div>
+   <div class="status"><span class="dot"></span><span id="alignmentText">Ajusta la posición de la Tierra</span></div>
+  </div>
+  <div class="scene-wrap">
+   <svg id="space" viewBox="0 0 900 310" role="img" aria-label="Diagrama interactivo del Sol, la Tierra y la Luna">
+    <defs>
+     <radialGradient id="sunGrad"><stop offset="0" stop-color="#fff9c7"/><stop offset=".65" stop-color="#ffc94d"/><stop offset="1" stop-color="#f47b27"/></radialGradient>
+     <radialGradient id="earthGrad" cx="30%" cy="25%"><stop offset="0" stop-color="#8de1ff"/><stop offset=".55" stop-color="#2389dc"/><stop offset="1" stop-color="#10356d"/></radialGradient>
+     <radialGradient id="moonGrad" cx="30%" cy="25%"><stop offset="0" stop-color="#fff"/><stop offset=".65" stop-color="#bfc9db"/><stop offset="1" stop-color="#6d7890"/></radialGradient>
+     <filter id="glow"><feGaussianBlur stdDeviation="7" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+     <pattern id="stars" width="95" height="67" patternUnits="userSpaceOnUse"><circle cx="12" cy="14" r="1" fill="#dbe7ff" opacity=".65"/><circle cx="64" cy="35" r=".8" fill="#fff" opacity=".5"/><circle cx="82" cy="8" r=".7" fill="#8eb9ff" opacity=".6"/></pattern>
+    </defs>
+    <rect width="900" height="310" fill="#030610"/><rect width="900" height="310" fill="url(#stars)"/>
+    <path id="lightRay" d="M110 155 L790 155" stroke="#ffd66b" stroke-width="2" stroke-dasharray="7 8" opacity=".65"/>
+    <path id="shadowCone" d="M155 130 L700 95 L700 215 L155 180 Z" fill="#000" opacity=".0"/>
+    <circle cx="110" cy="155" r="50" fill="#ffbd43" opacity=".12" filter="url(#glow)"/>
+    <circle cx="110" cy="155" r="34" fill="url(#sunGrad)" filter="url(#glow)"/>
+    <g id="sunLabel"><text x="110" y="215" fill="#ffe29a" text-anchor="middle" font-size="15" font-weight="700">SOL</text></g>
+    <g id="earthGroup" transform="translate(450 155)">
+      <circle r="22" fill="url(#earthGrad)" stroke="#9ee5ff" stroke-width="1.3"/>
+      <path d="M-13 -10 L-5 -17 L1 -8 L-3 0 L-12 3 L-17 -3 Z M5 4 L15 -1 L18 7 L10 15 L3 11 Z M-1 -1 L5 -6 L10 -3 L6 2 L2 8 L-3 5 Z" fill="#5acb8a" opacity=".95"/>
+      <text y="48" fill="#a9dfff" text-anchor="middle" font-size="15" font-weight="700">TIERRA</text>
+    </g>
+    <g id="moonGroup" transform="translate(710 155)">
+      <circle r="13" fill="url(#moonGrad)" stroke="#e4ebf7" stroke-width="1"/>
+      <circle cx="4" cy="-4" r="2.2" fill="#8792a6" opacity=".65"/><circle cx="-5" cy="4" r="1.7" fill="#8792a6" opacity=".65"/>
+      <text y="34" fill="#dce4f5" text-anchor="middle" font-size="14" font-weight="700">LUNA</text>
+    </g>
+    <g id="earthHandle" style="cursor:grab" tabindex="0" role="slider" aria-label="Mover la Tierra" aria-valuemin="300" aria-valuemax="610" aria-valuenow="450">
+      <circle r="29" fill="transparent" stroke="#8fd5ff" stroke-width="2" stroke-dasharray="4 5" opacity=".75"/>
+      <path d="M-5 -35 L5 -35 L0 -43 Z" fill="#8fd5ff"/>
+    </g>
+    <g id="moonHandle" style="cursor:grab" tabindex="0" role="slider" aria-label="Mover la Luna" aria-valuemin="560" aria-valuemax="820" aria-valuenow="710">
+      <circle r="20" fill="transparent" stroke="#e1e8f7" stroke-width="1.5" stroke-dasharray="3 5" opacity=".6"/>
+    </g>
+    <text x="450" y="28" fill="#a9b8d5" text-anchor="middle" font-size="12">Diagrama esquemático · no está a escala</text>
+   </svg>
+  </div>
+  <div class="scene-caption"><span>☀️ Sol: fuente de luz</span><span>🔵 Tierra: proyecta sombra</span><span>⚪ Luna: refleja la luz solar</span></div>
+  <div class="controls">
+   <label for="earthRange" id="earthLabel">Posición de la Tierra</label><span class="value" id="earthValue">450</span>
+   <input id="earthRange" type="range" min="300" max="610" value="450" step="1" aria-label="Posición horizontal de la Tierra">
+   <span class="small" id="earthHint">Arrastra el control para moverla.</span><span></span>
+   <label for="moonRange" id="moonLabel">Posición de la Luna</label><span class="value" id="moonValue">710</span>
+   <input id="moonRange" type="range" min="560" max="820" value="710" step="1" aria-label="Posición horizontal de la Luna">
+   <span class="small">Arrastra los círculos punteados para mover los astros manualmente.</span><span></span>
+  </div>
+  <div class="control-buttons">
+   <button id="alignBtn" type="button">✨ Alinear para el eclipse</button>
+   <button id="resetBtn" type="button">↺ Reiniciar</button>
+  </div>
+ </section>
+ <section class="card">
+  <h2 id="explainTitle">¿Qué ocurre en un eclipse lunar?</h2>
+  <p id="explainText">La Tierra se ubica entre el Sol y la Luna. La Tierra bloquea parte de la luz solar que normalmente ilumina la Luna y su sombra cae sobre ella.</p>
+  <div class="info-grid" style="margin-top:14px">
+   <article class="info"><h3>📍 Alineación</h3><p id="alignInfo">Sol → Tierra → Luna. La Tierra queda en medio.</p></article>
+   <article class="info"><h3>💡 Luz y sombra</h3><p id="shadowInfo">La luz viaja en línea recta. La Tierra bloquea la luz y forma una sombra en el espacio.</p></article>
+   <article class="info"><h3>🔭 ¿Cuándo ocurre?</h3><p id="whenInfo">Ocurre durante la Luna llena, cuando los tres astros se alinean suficientemente.</p></article>
+  </div>
+  <div class="note" style="margin-top:14px"><strong>Idea clave de Física:</strong> un eclipse ocurre cuando un astro bloquea la luz del Sol y otro cuerpo entra en su sombra, o cuando la luz solar queda bloqueada desde nuestro punto de vista.</div>
+ </section>
+
+</main>
+<footer>Recurso educativo interactivo · Física de 1° medio · Las distancias y tamaños del dibujo son ilustrativos.</footer>
+<script>
+const $=id=>document.getElementById(id);
+let mode='lunar', earthX=450, moonX=710, dragging=null;
+const earthRange=$('earthRange'),moonRange=$('moonRange');
+function update(){
+ earthRange.value=earthX;moonRange.value=moonX;$('earthValue').textContent=earthX;$('moonValue').textContent=moonX;
+ $('earthGroup').setAttribute('transform',`translate(${earthX} 155)`);
+ $('moonGroup').setAttribute('transform',`translate(${moonX} 155)`);
+ $('earthHandle').setAttribute('transform',`translate(${earthX} 155)`);
+ $('moonHandle').setAttribute('transform',`translate(${moonX} 155)`);
+ $('earthHandle').setAttribute('aria-valuenow',earthX);$('moonHandle').setAttribute('aria-valuenow',moonX);
+ const earth=mode==='lunar'?earthX:moonX, other=mode==='lunar'?moonX:earthX;
+ const aligned=Math.abs(earth-450)<28 && Math.abs(other-(mode==='lunar'?710:450))<45;
+ const proper=mode==='lunar'?(earthX>390&&earthX<530&&moonX>earthX+65):(moonX>360&&moonX<520&&earthX>moonX+45);
+ const perfect=mode==='lunar'?(Math.abs(earthX-450)<25&&Math.abs(moonX-710)<45):(Math.abs(moonX-450)<25&&Math.abs(earthX-610)<30);
+ $('alignmentText').textContent=perfect?'¡Alineación de eclipse!':proper?'Alineación aproximada':'Ajusta los astros para alinearlos';
+ $('alignmentText').previousElementSibling.style.background=perfect?'#6fe2a2':proper?'#ffd66b':'#ffb95e';
+ drawShadow();
+}
+function drawShadow(){
+ const shadow=$('shadowCone');
+ if(mode==='lunar'){
+   const x=earthX+23, end=Math.min(885,moonX+20);
+   shadow.setAttribute('d',`M${x} 142 L${end} 130 L${end} 180 L${x} 168 Z`);
+   shadow.setAttribute('fill','#02030a');
+   shadow.setAttribute('opacity',moonX>earthX+35?'0.78':'0.08');
+   $('lightRay').setAttribute('d',`M145 145 L${earthX-24} 145 M145 165 L${earthX-24} 165`);
+ } else {
+   const x=moonX+13, end=Math.min(880,earthX+23);
+   shadow.setAttribute('d',`M${x} 147 L${end} 151 L${end} 159 L${x} 163 Z`);
+   shadow.setAttribute('fill','#02030a');
+   shadow.setAttribute('opacity',earthX>moonX+20?'0.9':'0.08');
+   $('lightRay').setAttribute('d',`M145 145 L${moonX-14} 145 M145 165 L${moonX-14} 165`);
+ }
+}
+function setMode(next){
+ mode=next;
+ $('lunarBtn').classList.toggle('active',mode==='lunar');$('solarBtn').classList.toggle('active',mode==='solar');
+ if(mode==='lunar'){
+  $('sceneTitle').textContent='Eclipse lunar';$('sceneIntro').textContent='La Tierra se interpone entre el Sol y la Luna.';
+  $('earthLabel').textContent='Posición de la Tierra';$('moonLabel').textContent='Posición de la Luna';
+  $('earthHint').textContent='Mueve la Tierra para que quede entre el Sol y la Luna.';
+  $('explainTitle').textContent='¿Qué ocurre en un eclipse lunar?';
+  $('explainText').textContent='La Tierra se ubica entre el Sol y la Luna. La Tierra bloquea parte de la luz solar que normalmente ilumina la Luna y su sombra cae sobre ella.';
+  $('alignInfo').textContent='Sol → Tierra → Luna. La Tierra queda en medio.';
+  $('shadowInfo').textContent='La luz viaja en línea recta. La Tierra bloquea la luz y su sombra llega a la Luna.';
+  $('whenInfo').textContent='Ocurre durante la Luna llena, cuando los tres astros se alinean suficientemente.';
+  $('alignBtn').textContent='✨ Alinear eclipse lunar';earthRange.min=300;earthRange.max=610;moonRange.min=560;moonRange.max=820;
+  earthX=450;moonX=710;
+ }else{
+  $('sceneTitle').textContent='Eclipse solar';$('sceneIntro').textContent='La Luna se interpone entre el Sol y la Tierra.';
+  $('earthLabel').textContent='Posición de la Tierra';$('moonLabel').textContent='Posición de la Luna';
+  $('earthHint').textContent='Mueve la Luna para que quede entre el Sol y la Tierra.';
+  $('explainTitle').textContent='¿Qué ocurre en un eclipse solar?';
+  $('explainText').textContent='La Luna pasa entre el Sol y la Tierra. Su sombra se proyecta sobre una pequeña zona de la Tierra y, desde allí, el Sol se ve oculto total o parcialmente.';
+  $('alignInfo').textContent='Sol → Luna → Tierra. La Luna queda en medio.';
+  $('shadowInfo').textContent='La Luna bloquea parte de la luz solar y proyecta una sombra sobre la Tierra.';
+  $('whenInfo').textContent='Ocurre durante la Luna nueva, cuando los tres astros se alinean suficientemente.';
+  $('alignBtn').textContent='✨ Alinear eclipse solar';earthRange.min=500;earthRange.max=800;moonRange.min=260;moonRange.max=500;
+  earthX=610;moonX=450;
+ }
+ update();
+}
+earthRange.addEventListener('input',e=>{earthX=+e.target.value;update()});
+moonRange.addEventListener('input',e=>{moonX=+e.target.value;update()});
+$('lunarBtn').addEventListener('click',()=>setMode('lunar'));$('solarBtn').addEventListener('click',()=>setMode('solar'));
+$('alignBtn').addEventListener('click',()=>{if(mode==='lunar'){earthX=450;moonX=710}else{moonX=450;earthX=610}update()});
+$('resetBtn').addEventListener('click',()=>setMode(mode));
+function pointFromEvent(e){const rect=$('space').getBoundingClientRect();return (e.clientX-rect.left)*900/rect.width}
+function startDrag(id,e){dragging=id;$('space').setPointerCapture?.(e.pointerId);e.preventDefault()}
+$('earthHandle').addEventListener('pointerdown',e=>startDrag('earth',e));$('moonHandle').addEventListener('pointerdown',e=>startDrag('moon',e));
+$('space').addEventListener('pointermove',e=>{if(!dragging)return;const x=Math.round(pointFromEvent(e));if(dragging==='earth')earthX=Math.max(+earthRange.min,Math.min(+earthRange.max,x));else moonX=Math.max(+moonRange.min,Math.min(+moonRange.max,x));update()});
+$('space').addEventListener('pointerup',()=>dragging=null);$('space').addEventListener('pointercancel',()=>dragging=null);
+[['earthHandle','earth'],['moonHandle','moon']].forEach(([id,which])=>$(id).addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const d=e.key==='ArrowRight'?5:-5;if(which==='earth')earthX=Math.max(+earthRange.min,Math.min(+earthRange.max,earthX+d));else moonX=Math.max(+moonRange.min,Math.min(+moonRange.max,moonX+d));update()}));
+update();
+</script>
+</body>
+</html>
